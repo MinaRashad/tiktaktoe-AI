@@ -24,11 +24,13 @@ class Game extends React.Component{
     // if game didnt end and square is empty
     if (!squares[i] && !this.state.winner){
         squares[i] = this.state.current_turn
-        let next_turn = this.state.current_turn === "X" ? "O" : "X"
+        squares[best_move(squares)] = 'O';
+        console.log(squares)
+        //let next_turn = this.state.current_turn === "X" ? "O" : "X"
         let win = calc_win(squares)
         history.push(squares)
-        this.setState({history:history, current_turn:next_turn, winner:win})
-        console.log(`winner: ${win}`)
+        this.setState({history:history, winner:win})
+          
       }
   }
   // jumps to a specific part in history
@@ -40,7 +42,6 @@ class Game extends React.Component{
 
   }
   render(){
-    console.log("Yaaa")
     let status = this.state.winner? `Winner: ${this.state.winner}` :`Player ${this.state.current_turn} turn`;
     const length = this.state.history.length
     const current = this.state.history[length-1]
@@ -61,7 +62,6 @@ class Game extends React.Component{
           })
     
     const free = free_squares(current)
-    console.log(free)
     
     if (!winner && !free.length){
       status = 'Draw'
@@ -99,7 +99,7 @@ class Board extends React.Component{
               className={this.props.className + win}
               value={this.props.squares[i]} 
               onClick={()=> this.props.onClick(i)}
-              key={i} />) 
+               />) 
   }
   render(){
     const rows = [];
@@ -182,6 +182,66 @@ function winning_squares(squares){
     
   }
   return false;
+}
+
+/**
+ * This function uses minmax algorithm to find the best position to put
+ * 
+ * @param {String[]} squares Array of length 9 can have X' , 'O' or null 
+ * 
+ * @returns {Number} for best square
+ */
+
+function best_move(squares, is_AI_turn=true, get_move=true){
+
+    // we are always playing with 'O'
+    // first we find our options
+    let free_Squares = free_squares(squares);
+    if(free_Squares.length === 0) return 0;
+    let scores = free_Squares.reduce((initial,current)=> {initial[current] = 0; return initial}, {})
+    
+    for(let square of free_Squares){
+        
+        let new_squares = squares.slice();
+        // putting mark in square
+        new_squares[square] = is_AI_turn?'O':'X'
+        // getting result
+        let result = calc_win(new_squares)
+        // increase score if AI won and decrease if lost
+        switch (result){
+          case 'X': 
+            scores[square] -= 100;
+            break;
+          case 'O':
+            scores[square] += 10;
+            break;
+          default:
+            scores[square] -= 10;
+            break;
+        }
+        // add score of branchs
+        scores[square] += best_move(new_squares, !is_AI_turn, false)
+
+    }
+
+    if(get_move){
+      let bestScore = -Infinity
+      let bestmove = 4;
+      for(let move of Object.keys(scores)){
+        if(scores[move] > bestScore) {
+            bestScore = scores[move];
+            bestmove = move;
+        }
+      }
+      return bestmove
+      // console.log("Best move for O : ", bestmove)
+    }else{
+      // return average
+      let average = Object.values(scores).reduce((init,current)=>{init += current/free_Squares.length; return init}, 0)
+      //console.log("average ", average)
+      return average
+    }
+
 }
 
 export default Game;
