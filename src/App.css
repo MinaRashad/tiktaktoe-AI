@@ -18,7 +18,7 @@ ol, ul {
 }
 
 .square {
-  --size:20vw;
+  --size:15vw;
   background: #fff;
   border: 1vh solid #999;
   float: left;

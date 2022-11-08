@@ -26,10 +26,11 @@ class Game extends React.Component{
         squares[i] = this.state.current_turn
         squares[best_move(squares)] = 'O';
         console.log(squares)
-        //let next_turn = this.state.current_turn === "X" ? "O" : "X"
+        let next_turn = 'X';// this.state.current_turn === "X" ? "O" : "X"
         let win = calc_win(squares)
         history.push(squares)
-        this.setState({history:history, winner:win})
+        this.setState({history:history, current_turn:next_turn, winner:win})
+        
           
       }
   }
@@ -197,7 +198,7 @@ function best_move(squares, is_AI_turn=true, get_move=true){
     // we are always playing with 'O'
     // first we find our options
     let free_Squares = free_squares(squares);
-    if(free_Squares.length === 0) return 0;
+    // if(free_Squares.length === 0 && get_move) return 0;
     let scores = free_Squares.reduce((initial,current)=> {initial[current] = 0; return initial}, {})
     
     for(let square of free_Squares){
@@ -207,7 +208,7 @@ function best_move(squares, is_AI_turn=true, get_move=true){
         new_squares[square] = is_AI_turn?'O':'X'
         // getting result
         let result = calc_win(new_squares)
-        // increase score if AI won and decrease if lost
+        // increase score if AI won and decrease if lost or didnt achieve anything
         switch (result){
           case 'X': 
             scores[square] -= 100;
