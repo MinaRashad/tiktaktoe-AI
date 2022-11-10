@@ -24,12 +24,17 @@ class Game extends React.Component{
     // if game didnt end and square is empty
     if (!squares[i] && !this.state.winner){
         squares[i] = this.state.current_turn
-        squares[best_move(squares)] = 'O';
         console.log(squares)
-        let next_turn = 'X';// this.state.current_turn === "X" ? "O" : "X"
+        let next_turn = this.state.current_turn === "X" ? "O" : "X"
         let win = calc_win(squares)
         history.push(squares)
-        this.setState({history:history, current_turn:next_turn, winner:win})
+        this.setState({history:history, current_turn:next_turn, winner:win}, ()=>{
+            if(this.state.current_turn === "O"){
+              this.square_click(best_move(this.state.history[this.state.history.length -1 ]))
+            }
+        })
+
+        
         
           
       }
@@ -195,54 +200,77 @@ function winning_squares(squares){
 
 function best_move(squares, is_AI_turn=true, get_move=true){
 
+    // check if game ended
+    let result = calc_win(squares)
+    switch (result){
+      case 'X': 
+        return -10
+      case 'O':
+        return 10
+      default:
+        break;
+    }
+
     // we are always playing with 'O'
     // first we find our options
     let free_Squares = free_squares(squares);
-    // if(free_Squares.length === 0 && get_move) return 0;
     let scores = free_Squares.reduce((initial,current)=> {initial[current] = 0; return initial}, {})
     
+
+    if(free_Squares.length === 0){
+      return 0
+    }
+
     for(let square of free_Squares){
         
         let new_squares = squares.slice();
         // putting mark in square
         new_squares[square] = is_AI_turn?'O':'X'
-        // getting result
-        let result = calc_win(new_squares)
-        // increase score if AI won and decrease if lost or didnt achieve anything
-        switch (result){
-          case 'X': 
-            scores[square] -= 100;
-            break;
-          case 'O':
-            scores[square] += 10;
-            break;
-          default:
-            scores[square] -= 10;
-            break;
-        }
         // add score of branchs
-        scores[square] += best_move(new_squares, !is_AI_turn, false)
+        let score = best_move(new_squares, !is_AI_turn, false)
+        if(isNaN(score)){debugger;best_move(new_squares, !is_AI_turn, false)}
+        scores[square] += score
 
     }
 
     if(get_move){
+      
       let bestScore = -Infinity
       let bestmove = 4;
+      // console.log("Scores: ", scores)
+      console.log(scores)
       for(let move of Object.keys(scores)){
-        if(scores[move] > bestScore) {
+        if( scores[move] > bestScore) {
             bestScore = scores[move];
             bestmove = move;
         }
+
       }
+
       return bestmove
-      // console.log("Best move for O : ", bestmove)
     }else{
-      // return average
-      let average = Object.values(scores).reduce((init,current)=>{init += current/free_Squares.length; return init}, 0)
-      //console.log("average ", average)
-      return average
+      // return representing score:
+      // if its AI turn: max value
+      // if its Plater: min value
+      let arr =Object.values(scores)
+      let val =is_AI_turn? Math.max(...arr): Math.min(...arr)
+
+      return val
     }
 
 }
+
+/*
+             O
+            / \
+           O   O
+          /\    
+       -10  0
+
+
+
+
+*/
+
 
 export default Game;
